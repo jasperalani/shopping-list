@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
 	"net/http"
 	//"strconv"
@@ -9,9 +8,7 @@ import (
 
 func createErrorResponse(w http.ResponseWriter, queryColumn string) {
 
-	db, _ := sql.Open("mysql", "root:password@tcp(127.0.0.1:3306)/shoppinglist")
-
-	results := db.QueryRow("SELECT " + queryColumn + " FROM errors")
+	results := db.QueryRow("SELECT " + queryColumn + " FROM errors;")
 
 	response := &Response{}
 
@@ -23,7 +20,7 @@ func createErrorResponse(w http.ResponseWriter, queryColumn string) {
 
 }
 
-func createResponse(w http.ResponseWriter, response string) {
+func createResponse(w http.ResponseWriter, response []string) {
 
 	responseObj := &Response{
 		Response: response,

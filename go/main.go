@@ -3,13 +3,32 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"log"
-	"net/http"
-	"ioutil"
-
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
+	_ "github.com/jmoiron/sqlx"
+	"io/ioutil"
+	"log"
+	"net/http"
 )
+
+func main() {
+
+	//Init router
+	r := mux.NewRouter()
+
+	//Router Handlers / Endpoints
+	r.HandleFunc("/", createItemRecord).Methods("POST")
+	r.HandleFunc("/", readItemRecord).Methods("GET")
+	r.HandleFunc("/{id}", readItemRecord).Methods("GET")
+	r.HandleFunc("/{id}", updateItemRecord).Methods("PUT")
+	r.HandleFunc("/{id}", deleteItemRecord).Methods("DELETE")
+
+	r.NotFoundHandler = http.HandlerFunc(HTTPNotFound)
+
+	log.Println("Starting Server")
+	log.Fatal(http.ListenAndServe(":10000", r))
+
+}
 
 func createDatabase() {
 
@@ -46,28 +65,6 @@ func createDatabase() {
 	//    }
 }
 
-func main() {
-
-	//createDatabase()
-
-	//Init router
-	r := mux.NewRouter()
-
-	//Router Handlers / Endpoints
-	r.HandleFunc("/", createItemRecord).Methods("POST")
-	r.HandleFunc("/", readItemRecord).Methods("GET")
-	r.HandleFunc("/{id}", readItemRecord).Methods("GET")
-	r.HandleFunc("/{id}", updateItemRecord).Methods("PUT")
-	r.HandleFunc("/{id}", deleteItemRecord).Methods("DELETE")
-
-	r.NotFoundHandler = http.HandlerFunc(HTTPNotFound)
-
-	log.Println("Starting Server")
-	log.Fatal(http.ListenAndServe(":10000", r))
-
-
-}
-
 /*
 
 {
@@ -94,6 +91,8 @@ func main() {
     "person": "Jasper",
     "quantity": 2
 }
+
+
 
 
 */
