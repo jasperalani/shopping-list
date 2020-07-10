@@ -7,16 +7,18 @@ import (
 	"github.com/jmoiron/sqlx"
 	"log"
 	"net/http"
-	"reflect"
+	//"reflect"
 	"strconv"
 )
 
 var (
 	databaseUrl string = "root:password@tcp(127.0.0.1:3306)/shopping-list"
-	db, _              = sql.Open("mysql", databaseUrl)
+	db, err            = sqlx.Connect("mysql", "root:password@tcp(127.0.0.1:3306)/shopping-list")
 )
 
 func createItemRecord(w http.ResponseWriter, request *http.Request) {
+
+	returnError(err) // line 16
 
 	var item Item
 
@@ -42,16 +44,38 @@ func createItemRecord(w http.ResponseWriter, request *http.Request) {
 
 		db.Query(updateQuery)
 
-		createResponse(w, []string{"inc_qty", "Increased quantity of matching item, did not insert item"})
+		createResponse(w, "inc_qty")
 
 	} else {
 
-		insertQuery := "INSERT INTO items (name, url, image_url, person, quantity) "
+		insertQuery := "INSERT INTO items (name, url, image_url, person, quantity)"
 		insertQuery = insertQuery + "VALUES ('" + item.Name + "', '" + item.URL + "', '" + item.ImageURL + "', '" + item.Person + "', " + strconv.Itoa(item.Quantity) + ")"
 
-		db.Query(insertQuery)
+		_, err = db.Query(insertQuery)
+		returnError(err)
 
-		json.NewEncoder(w).Encode(&item)
+		var (
+			maxID *sql.Rows
+			ID    int
+		)
+
+		maxID, err = db.Query("SELECT MAX(id) FROM items") // this query is not safe
+		returnError(err)
+
+		if maxID.Next() {
+			err = maxID.Scan(&ID)
+			returnError(err)
+		}
+
+		returnedItem := &Item{
+			ID:       ID,
+			Name:     item.Name,
+			URL:      item.URL,
+			Person:   item.Person,
+			Quantity: item.Quantity,
+		}
+
+		json.NewEncoder(w).Encode(returnedItem)
 
 	}
 
@@ -61,89 +85,38 @@ func readItemRecord(w http.ResponseWriter, r *http.Request) {
 
 	params := mux.Vars(r)
 
-	if len(params) > 0 { //If number
-		db, _ := sql.Open("mysql", databaseUrl)
+	var (
+		item       Item
+		items      []Item
+		query      string
+		queryScope bool = len(params) > 0
+	)
 
-		var id int
+	query = evaluator(queryScope,
+		"SELECT id, name, url, image_url, person, quantity, deleted FROM items WHERE id = "+params["id"],
+		"SELECT * FROM items",
+	)
 
-		selectIDQuery := db.QueryRow("SELECT id FROM items WHERE id = " + params["id"])
+	if queryScope {
 
-		selectIDQuery.Scan(&id)
+		err = db.Get(&item, query)
 
-		if id == 0 {
-
+		if item.ID == 0 {
 			createErrorResponse(w, "err_idnotfound")
-
-		} else {
-
-			var (
-				item  []Item
-				query string = "SELECT id, name, url, image_url, person FROM items WHERE id = " + params["id"]
-			)
-
-			db, err := sqlx.Connect("mysql", "root:password@tcp(127.0.0.1:3306)/shopping-list")
-			returnError(err)
-
-			err = db.Select(&item, query)
-			returnError(err)
-
-			err = json.NewEncoder(w).Encode(&item)
-			returnError(err)
-
-			//results, _ := db.Query()
-			//
-			//for results.Next() {
-			//
-			//
-			//	//results.Scan(
-			//	//	&item.ID,
-			//	//	&item.Name,
-			//	//	&item.URL,
-			//	//	&item.ImageURL,
-			//	//	&item.Person,
-			//	//	&item.Quantity,
-			//	//	&item.Deleted,
-			//	//	)
-			//
-			//	results.Scan(
-			//		&item,
-			//	)
-			//
-			//	json.NewEncoder(w).Encode(&item)
-			//
-			//}
-
+			return
 		}
 
-	} else { // if all
+		json.NewEncoder(w).Encode(item)
 
-		db, _ := sql.Open("mysql", databaseUrl)
+	} else {
+		err = db.Select(&items, query)
 
-		results, err := db.Query("SELECT * FROM items")
-
-		if err != nil {
-			log.Panic(err)
+		if len(items) == 0 {
+			createErrorResponse(w, "err_noitems")
+			return
 		}
 
-		var items []Item
-
-		for results.Next() {
-
-			var item Item
-
-			results.Scan(&item.ID, &item.Name, &item.URL, &item.ImageURL, &item.Person, &item.Quantity)
-
-			if reflect.TypeOf(item.ID) != nil {
-				items = append(items, item)
-			}
-		}
-
-		if len(items) > 0 {
-			json.NewEncoder(w).Encode(&items)
-		} else {
-			NoItems(w, r)
-		}
-
+		json.NewEncoder(w).Encode(items)
 	}
 
 }

@@ -6,7 +6,7 @@ import (
 	//"strconv"
 )
 
-func createErrorResponse(w http.ResponseWriter, queryColumn string) {
+func createErrorResponse(w http.ResponseWriter, queryColumn string) bool {
 
 	results := db.QueryRow("SELECT " + queryColumn + " FROM errors;")
 
@@ -18,9 +18,11 @@ func createErrorResponse(w http.ResponseWriter, queryColumn string) {
 
 	w.Write(data)
 
+	return true
+
 }
 
-func createResponse(w http.ResponseWriter, response []string) {
+func createResponse(w http.ResponseWriter, response string) {
 
 	responseObj := &Response{
 		Response: response,
@@ -31,3 +33,12 @@ func createResponse(w http.ResponseWriter, response []string) {
 	w.Write(data)
 
 }
+
+func evaluator(subject bool, outcome1 string, outcome2 string) string {
+	if subject {
+		return outcome1
+	}
+	return outcome2
+}
+
+//func funcEvaluator (subject bool, outcome1 func(Type reflect.Type))
