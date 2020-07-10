@@ -1,24 +1,26 @@
 -- auto-generated definition
 create table items
 (
-    ID       int auto_increment
+    id        int auto_increment
         primary key,
-    Name     varchar(255) null,
-    URL      varchar(255) null,
-    ImageURL varchar(255) null,
-    Person   varchar(255) null,
-    Quantity int          null,
-    Deleted  tinyint(1)   null default false
+    name      varchar(255) null,
+    url       varchar(255) null,
+    image_url varchar(255) null,
+    person    varchar(255) null,
+    quantity  int          null,
+    deleted   tinyint(1)   null default false
 );
 
 -- auto-generated definition
 create table errors
 (
-    HTTPNotFound   varchar(50) null,
-    IDNotFound     varchar(50) null,
-    NoDataProvided varchar(50) null,
-    NoItems        varchar(50) null
+    err_httpnotfound   varchar(255) null,
+    err_idnotfound     varchar(255) null,
+    err_nodataprovided varchar(255) null,
+    err_noitems        varchar(255) null
 );
 
-INSERT INTO `shopping-list`.errors (HTTPNotFound, IDNotFound, NoDataProvided, NoItems)
+
+
+INSERT INTO `shopping-list`.errors (err_httpnotfound, err_idnotfound, err_nodataprovided, err_noitems)
 VALUES ('HTTP Not Found Error', 'ID Not Found', 'Error No Data Provided', 'Error No Items');
