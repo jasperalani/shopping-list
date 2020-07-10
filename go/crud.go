@@ -4,10 +4,16 @@ import (
 	"database/sql"
 	"encoding/json"
 	"github.com/gorilla/mux"
+	"github.com/jmoiron/sqlx"
 	"log"
 	"net/http"
 	"reflect"
 	"strconv"
+)
+
+var (
+	databaseUrl string = "root:password@tcp(127.0.0.1:3306)/shopping-list"
+	db, _              = sql.Open("mysql", databaseUrl)
 )
 
 func createItemRecord(w http.ResponseWriter, request *http.Request) {
@@ -16,11 +22,7 @@ func createItemRecord(w http.ResponseWriter, request *http.Request) {
 
 	_ = json.NewDecoder(request.Body).Decode(&item)
 
-	db, _ := sql.Open("mysql", "root:password@tcp(mariadb:3306)/shoppinglist")
-
-	// SELECT name FROM items WHERE name LIKE 'Socks'
-
-	checkQuery := "SELECT id, name, quantity FROM items WHERE name LIKE '" + item.Name + "'"
+	checkQuery := "SELECT id, name, quantity FROM items WHERE name LIKE '" + item.Name + "';"
 
 	results := db.QueryRow(checkQuery)
 
@@ -33,17 +35,19 @@ func createItemRecord(w http.ResponseWriter, request *http.Request) {
 	results.Scan(&id, &name, &quantity)
 
 	if item.Name == name {
+
 		finalQuantity := item.Quantity + quantity
 
 		updateQuery := "UPDATE items set quantity = " + strconv.Itoa(finalQuantity) + " WHERE id = " + strconv.Itoa(id)
 
 		db.Query(updateQuery)
 
-		createResponse(w, "Increased quantity of matching item, did not insert item")
+		createResponse(w, []string{"inc_qty", "Increased quantity of matching item, did not insert item"})
 
 	} else {
 
-		insertQuery := "INSERT INTO items (name, url, image_url, person, quantity) VALUES ('" + item.Name + "', '" + item.URL + "', '" + item.ImageURL + "', '" + item.Person + "', " + strconv.Itoa(item.Quantity) + ")"
+		insertQuery := "INSERT INTO items (name, url, image_url, person, quantity) "
+		insertQuery = insertQuery + "VALUES ('" + item.Name + "', '" + item.URL + "', '" + item.ImageURL + "', '" + item.Person + "', " + strconv.Itoa(item.Quantity) + ")"
 
 		db.Query(insertQuery)
 
@@ -58,11 +62,9 @@ func readItemRecord(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
 	if len(params) > 0 { //If number
-		db, _ := sql.Open("mysql", "root:password@tcp(mariadb:3306)/shoppinglist")
+		db, _ := sql.Open("mysql", databaseUrl)
 
-		var (
-			id int
-		)
+		var id int
 
 		selectIDQuery := db.QueryRow("SELECT id FROM items WHERE id = " + params["id"])
 
@@ -74,23 +76,48 @@ func readItemRecord(w http.ResponseWriter, r *http.Request) {
 
 		} else {
 
-			results, _ := db.Query("SELECT id, name, url, image_url, person FROM items WHERE id = " + params["id"])
+			var (
+				item  []Item
+				query string = "SELECT id, name, url, image_url, person FROM items WHERE id = " + params["id"]
+			)
 
-			for results.Next() {
+			db, err := sqlx.Connect("mysql", "root:password@tcp(127.0.0.1:3306)/shopping-list")
+			returnError(err)
 
-				var item Item
+			err = db.Select(&item, query)
+			returnError(err)
 
-				results.Scan(&item.ID, &item.Name, &item.URL, &item.ImageURL, &item.Person)
+			err = json.NewEncoder(w).Encode(&item)
+			returnError(err)
 
-				json.NewEncoder(w).Encode(&item)
-
-			}
+			//results, _ := db.Query()
+			//
+			//for results.Next() {
+			//
+			//
+			//	//results.Scan(
+			//	//	&item.ID,
+			//	//	&item.Name,
+			//	//	&item.URL,
+			//	//	&item.ImageURL,
+			//	//	&item.Person,
+			//	//	&item.Quantity,
+			//	//	&item.Deleted,
+			//	//	)
+			//
+			//	results.Scan(
+			//		&item,
+			//	)
+			//
+			//	json.NewEncoder(w).Encode(&item)
+			//
+			//}
 
 		}
 
 	} else { // if all
 
-		db, _ := sql.Open("mysql", "root:password@tcp(mariadb:3306)/shoppinglist")
+		db, _ := sql.Open("mysql", databaseUrl)
 
 		results, err := db.Query("SELECT * FROM items")
 
@@ -114,7 +141,7 @@ func readItemRecord(w http.ResponseWriter, r *http.Request) {
 		if len(items) > 0 {
 			json.NewEncoder(w).Encode(&items)
 		} else {
-			NoItems(w)
+			NoItems(w, r)
 		}
 
 	}
@@ -175,7 +202,7 @@ func updateItemRecord(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(&updatedItem)
 
 	} else {
-		NoDataProvided(w)
+		NoDataProvided(w, r)
 	}
 
 }

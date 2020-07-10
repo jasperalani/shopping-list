@@ -4,25 +4,25 @@ version: '3'
 
 services:
 
-  go:
-    build:
-      context: ./go
-      dockerfile: go.Dockerfile
-    ports:
-      - "10000:10000"
-    restart: unless-stopped
-    depends_on: 
-      - redis
-    environment:
-      REDIS_URL: redis:6379    
-    networks:
-      - babylon
-
-  redis:
-    image: "redis:alpine"
-    restart: unless-stopped
-    networks:
-      - babylon
+#  go:
+#    build:
+#      context: ./go
+#      dockerfile: go.Dockerfile
+#    ports:
+#      - "10000:10000"
+#    restart: unless-stopped
+#    depends_on:
+#      - redis
+#    environment:
+#      REDIS_URL: redis:6379
+#    networks:
+#      - babylon
+#
+#  redis:
+#    image: "redis:alpine"
+#    restart: unless-stopped
+#    networks:
+#      - babylon
 
   mariadb:
     image: mariadb:10.3.9
@@ -43,16 +43,16 @@ services:
     networks:
       - babylon
 
-  react:
-    build:
-      context: ./react
-      dockerfile: react.Dockerfile
-    args:
-        app_env: ${APP_ENV}
-    volumes:
-      - ./react/src:/react/src
-    ports:
-      - "8080:8080"
+#  react:
+#    build:
+#      context: ./react
+#      dockerfile: react.Dockerfile
+#    args:
+#        app_env: ${APP_ENV}
+#    volumes:
+#      - ./react/src:/react/src
+#    ports:
+#      - "8080:8080"
 
 networks:
   babylon:    

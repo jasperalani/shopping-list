@@ -10,12 +10,13 @@ type Item struct {
 	ImageURL string `json:"image_url"`
 	Person   string `json:"person"`
 	Quantity int    `json:"quantity"`
+	Deleted  bool   `json:"deleted"`
 }
 
 /*
  * Response
  */
 type Response struct {
-	Response string `json:"response"`
-	Error    string `json:"error"`
+	Response []string `json:"response"`
+	Error    string   `json:"error"`
 }
