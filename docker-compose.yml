@@ -2,28 +2,24 @@
 
 version: '3'
 
-# Define services
 services:
 
-  # App Service
-  app:
-    # Configuration for building the docker image for the service
+  go:
     build:
-      context: . # Use an image built from the specified dockerfile in the current directory.
+      context: ./go
       dockerfile: go.Dockerfile
     ports:
-      - "10000:10000" # Forward the exposed port 8080 on the container to port 8080 on the host machine
+      - "10000:10000"
     restart: unless-stopped
     depends_on: 
-      - redis # This service depends on redis. Start that first.
-    environment: # Pass environment variables to the service
+      - redis
+    environment:
       REDIS_URL: redis:6379    
-    networks: # Networks to join (Services on the same network can communicate with each other using their name)
+    networks:
       - babylon
 
-  # Redis Service   
   redis:
-    image: "redis:alpine" # Use a public Redis image to build the redis service    
+    image: "redis:alpine"
     restart: unless-stopped
     networks:
       - babylon
@@ -32,7 +28,7 @@ services:
     image: mariadb:10.3.9
     container_name: ${APP_NAME:?err}-mariadb
     build:
-      context: . # Use an image built from the specified dockerfile in the current directory.
+      context: ./mariadb
       dockerfile: mariadb.Dockerfile
     ports:
       - '3306:3306'
@@ -47,13 +43,14 @@ services:
     networks:
       - babylon
 
-  frontend:
+  react:
     build:
-      context: react
-      args:
+      context: ./react
+      dockerfile: react.Dockerfile
+    args:
         app_env: ${APP_ENV}
     volumes:
-      - ./frontend/src:/frontend/src
+      - ./react/src:/react/src
     ports:
       - "8080:8080"
 
