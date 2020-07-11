@@ -1,0 +1,16 @@
+.json-table {
+  margin: auto;
+
+  &.items-table {
+
+    tr {
+      border: 1px solid black;
+    }
+
+    tr, td {
+      padding: 30px;
+    }
+    
+  }
+
+}

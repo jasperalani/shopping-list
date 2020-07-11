@@ -1,0 +1,31 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale; }
+
+.shopping-list-app {
+  text-align: center; }
+
+#shopping-list-logo {
+  height: 15vmin;
+  margin: 7vmin; }
+  @media (prefers-reduced-motion: no-preference) {
+    #shopping-list-logo {
+      animation: App-logo-spin infinite 20s linear; } }
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg); }
+  to {
+    transform: rotate(360deg); } }
+
+header.shopping-list-header {
+  margin-bottom: 60px; }
+
+.json-table {
+  margin: auto; }
+  .json-table.items-table tr {
+    border: 1px solid black; }
+  .json-table.items-table tr, .json-table.items-table td {
+    padding: 30px; }
