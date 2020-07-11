@@ -157,36 +157,26 @@ func updateItemRecord(w http.ResponseWriter, r *http.Request) {
 		id          float32
 		item        ItemJSON
 		updateQuery string
-		//checkExistenceQuery string
-		fieldName  string
-		values     []interface{}
-		valueTypes reflect.Type
-		maxIndex   int
+		fieldName   string
+		values      []interface{}
+		valueTypes  reflect.Type
+		maxIndex    int
 	)
 
-	id = selectID(params["id"])
-
-	if id == -11 {
-		IDNotFound(w, r)
+	if !anyItems() {
+		NoItems(w, r)
 		return
 	}
 
-	if id < 0 || id == 0 {
-		NoItems(w, r)
+	id = selectID(params["id"])
+
+	if id == 0 {
+		IDNotFound(w, r)
 		return
 	}
 
 	err = json.NewDecoder(r.Body).Decode(&item)
 	handleError(err)
-
-	//checkExistenceQuery = "SELECT id FROM items WHERE id = " + params["id"]
-	//err = db.Get(&item, checkExistenceQuery)
-	//handleError(err)
-	//
-	//if item.Name == "" {
-	//	IDNotFound(w, r)
-	//	return
-	//}
 
 	updateQuery = "UPDATE items SET "
 

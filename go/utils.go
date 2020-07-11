@@ -1,9 +1,8 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
-	"strings"
-
 	//"log"
 	"net/http"
 	//"strconv"
@@ -68,10 +67,12 @@ func selectID(id string) float32 {
 	)
 
 	err = db.Get(&item, queryID)
-	if strings.Contains(err.Error(), "sql: no rows in result set") {
-		return -11
+
+	if err == sql.ErrNoRows {
+		return 0
+	} else {
+		handleError(err)
 	}
-	handleError(err)
 
 	itemExists = item.ID != 0
 
@@ -91,9 +92,7 @@ func anyItems() bool {
 	)
 
 	err = db.Select(&items, queryAll)
-	handleError(err)
-
-	return len(items) > 0
+	return err != sql.ErrNoRows
 
 }
 
