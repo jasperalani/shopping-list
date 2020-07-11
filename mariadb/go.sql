@@ -9,7 +9,8 @@ create table items
     person    varchar(255) null,
     quantity  int          null,
     created   timestamp         default current_timestamp,
-    deleted   tinyint(1)   null default false
+    deleted   tinyint(1)   null default false,
+    completed tinyint(1)   null default false
 );
 
 -- auto-generated definition
