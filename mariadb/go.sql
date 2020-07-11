@@ -8,6 +8,7 @@ create table items
     image_url varchar(255) null,
     person    varchar(255) null,
     quantity  int          null,
+    created   timestamp         default current_timestamp,
     deleted   tinyint(1)   null default false
 );
 
