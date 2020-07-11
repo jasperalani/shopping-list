@@ -13,15 +13,17 @@ import (
 
 func main() {
 
+	//handleError(sqlxConnectError)
+
 	//Init router
 	r := mux.NewRouter()
 
 	//Router Handlers / Endpoints
 	r.HandleFunc("/", createItemRecord).Methods("POST")
 	r.HandleFunc("/", readItemRecord).Methods("GET")
-	r.HandleFunc("/{id}", readItemRecord).Methods("GET")
-	r.HandleFunc("/{id}", updateItemRecord).Methods("PUT")
-	r.HandleFunc("/{id}", deleteItemRecord).Methods("DELETE")
+	r.HandleFunc("/{id:[0-9]+}", readItemRecord).Methods("GET")
+	r.HandleFunc("/{id:[0-9]+}", updateItemRecord).Methods("PUT")
+	r.HandleFunc("/{id:[0-9]+}", deleteItemRecord).Methods("DELETE")
 
 	r.NotFoundHandler = http.HandlerFunc(HTTPNotFound)
 

@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func returnError(err error) {
+func handleError(err error) {
 	if err != nil {
 		log.Fatal(err)
 	}

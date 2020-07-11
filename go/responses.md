@@ -1,0 +1,6 @@
+- key: `item_created`
+- key: `quantity_increased`
+- item object
+- array of item objects
+- key: `item_updated`
+- key: `item_deleted`
