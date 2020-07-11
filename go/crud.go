@@ -4,35 +4,34 @@ import (
 	"database/sql"
 	"encoding/json"
 	"github.com/gorilla/mux"
+	"github.com/iancoleman/strcase"
+	_ "github.com/iancoleman/strcase"
 	"github.com/jmoiron/sqlx"
 	"log"
 	"net/http"
-	//"reflect"
+	"reflect"
 	"strconv"
 )
 
 var (
 	databaseUrl string = "root:password@tcp(127.0.0.1:3306)/shopping-list"
-	db, err            = sqlx.Connect("mysql", "root:password@tcp(127.0.0.1:3306)/shopping-list")
+	db, err            = sqlx.Connect("mysql", databaseUrl)
 )
 
 func createItemRecord(w http.ResponseWriter, request *http.Request) {
 
-	returnError(err) // line 16
-
-	var item Item
+	var (
+		item     Item
+		id       int
+		name     string
+		quantity int
+	)
 
 	_ = json.NewDecoder(request.Body).Decode(&item)
 
 	checkQuery := "SELECT id, name, quantity FROM items WHERE name LIKE '" + item.Name + "';"
 
 	results := db.QueryRow(checkQuery)
-
-	var (
-		id       int
-		name     string
-		quantity int
-	)
 
 	results.Scan(&id, &name, &quantity)
 
@@ -44,7 +43,7 @@ func createItemRecord(w http.ResponseWriter, request *http.Request) {
 
 		db.Query(updateQuery)
 
-		createResponse(w, "inc_qty")
+		createResponse(w, "quantity_increased")
 
 	} else {
 
@@ -52,7 +51,7 @@ func createItemRecord(w http.ResponseWriter, request *http.Request) {
 		insertQuery = insertQuery + "VALUES ('" + item.Name + "', '" + item.URL + "', '" + item.ImageURL + "', '" + item.Person + "', " + strconv.Itoa(item.Quantity) + ")"
 
 		_, err = db.Query(insertQuery)
-		returnError(err)
+		handleError(err)
 
 		var (
 			maxID *sql.Rows
@@ -60,22 +59,14 @@ func createItemRecord(w http.ResponseWriter, request *http.Request) {
 		)
 
 		maxID, err = db.Query("SELECT MAX(id) FROM items") // this query is not safe
-		returnError(err)
+		handleError(err)
 
 		if maxID.Next() {
 			err = maxID.Scan(&ID)
-			returnError(err)
+			handleError(err)
 		}
 
-		returnedItem := &Item{
-			ID:       ID,
-			Name:     item.Name,
-			URL:      item.URL,
-			Person:   item.Person,
-			Quantity: item.Quantity,
-		}
-
-		json.NewEncoder(w).Encode(returnedItem)
+		createResponse(w, "item_created")
 
 	}
 
@@ -87,14 +78,16 @@ func readItemRecord(w http.ResponseWriter, r *http.Request) {
 
 	var (
 		item       Item
+		item_      ItemJSON
 		items      []Item
+		items_     []ItemJSON
 		query      string
 		queryScope bool = len(params) > 0
 	)
 
 	query = evaluator(queryScope,
-		"SELECT id, name, url, image_url, person, quantity, deleted FROM items WHERE id = "+params["id"],
-		"SELECT * FROM items",
+		"SELECT id, name, url, image_url, person, quantity, deleted FROM items WHERE id = "+params["id"]+";",
+		"SELECT * FROM items;",
 	)
 
 	if queryScope {
@@ -102,21 +95,45 @@ func readItemRecord(w http.ResponseWriter, r *http.Request) {
 		err = db.Get(&item, query)
 
 		if item.ID == 0 {
-			createErrorResponse(w, "err_idnotfound")
+			IDNotFound(w, r)
 			return
 		}
 
-		json.NewEncoder(w).Encode(item)
+		item_ = ItemJSON{
+			ID:       item.ID,
+			Name:     item.Name,
+			URL:      item.URL,
+			ImageURL: item.ImageURL,
+			Person:   item.Person,
+			Quantity: item.Quantity,
+			Deleted:  item.Deleted,
+		}
+
+		json.NewEncoder(w).Encode(item_)
 
 	} else {
-		err = db.Select(&items, query)
 
-		if len(items) == 0 {
-			createErrorResponse(w, "err_noitems")
+		if !anyItems() {
+			NoItems(w, r)
 			return
 		}
 
-		json.NewEncoder(w).Encode(items)
+		err = db.Select(&items, query)
+
+		for _, item := range items {
+			items_ = append(items_, ItemJSON{
+				ID:       item.ID,
+				Name:     item.Name,
+				URL:      item.URL,
+				ImageURL: item.ImageURL,
+				Person:   item.Person,
+				Quantity: item.Quantity,
+				Deleted:  item.Deleted,
+			})
+		}
+
+		err = json.NewEncoder(w).Encode(items_)
+		handleError(err)
 	}
 
 }
@@ -136,59 +153,106 @@ func updateItemRecord(w http.ResponseWriter, r *http.Request) {
 
 	params := mux.Vars(r)
 
-	db, _ := sql.Open("mysql", "root:password@tcp(mariadb:3306)/shoppinglist")
+	var (
+		id          float32
+		item        ItemJSON
+		updateQuery string
+		//checkExistenceQuery string
+		fieldName  string
+		values     []interface{}
+		valueTypes reflect.Type
+		maxIndex   int
+	)
 
-	var item Item
+	id = selectID(params["id"])
 
-	_ = json.NewDecoder(r.Body).Decode(&item)
-
-	if len(item.Name) > 0 || len(item.URL) > 0 || len(item.ImageURL) > 0 || len(item.Person) > 0 || item.Quantity > 0 { //exists
-		var (
-			updateQuery string
-		)
-		updateQuery = "UPDATE items set "
-		if len(item.Name) > 0 {
-			updateQuery = updateQuery + "name = '" + item.Name + "', "
-		}
-		if len(item.Name) > 0 {
-			updateQuery = updateQuery + "url = '" + item.URL + "', "
-		}
-		if len(item.Name) > 0 {
-			updateQuery = updateQuery + "image_url = '" + item.ImageURL + "', "
-		}
-		if len(item.Name) > 0 {
-			updateQuery = updateQuery + "person = '" + item.Person + "', "
-		}
-		if len(item.Name) > 0 {
-			updateQuery = updateQuery + "quantity = " + strconv.Itoa(item.Quantity) + " "
-		}
-		updateQuery = updateQuery + " WHERE id = " + params["id"]
-
-		db.Query(updateQuery)
-
-		selectQuery := "SELECT * FROM items WHERE id = " + params["id"]
-
-		var updatedItem Item
-
-		db.QueryRow(selectQuery).Scan(&updatedItem.ID, &updatedItem.Name, &updatedItem.URL, &updatedItem.ImageURL, &updatedItem.Person, &updatedItem.Quantity)
-
-		json.NewEncoder(w).Encode(&updatedItem)
-
-	} else {
-		NoDataProvided(w, r)
+	if id == -11 {
+		IDNotFound(w, r)
+		return
 	}
+
+	if id < 0 || id == 0 {
+		NoItems(w, r)
+		return
+	}
+
+	err = json.NewDecoder(r.Body).Decode(&item)
+	handleError(err)
+
+	//checkExistenceQuery = "SELECT id FROM items WHERE id = " + params["id"]
+	//err = db.Get(&item, checkExistenceQuery)
+	//handleError(err)
+	//
+	//if item.Name == "" {
+	//	IDNotFound(w, r)
+	//	return
+	//}
+
+	updateQuery = "UPDATE items SET "
+
+	preInterfacedValues := reflect.ValueOf(item)
+	values = make([]interface{}, preInterfacedValues.NumField())
+	valueTypes = preInterfacedValues.Type()
+
+	for i := 0; i < preInterfacedValues.NumField(); i++ {
+		values[i] = preInterfacedValues.Field(i).Interface()
+	}
+
+	maxIndex = len(values) - 1
+
+	for index, value := range values {
+
+		fieldName = strcase.ToSnake(valueTypes.Field(index).Name)
+
+		if fieldName == "id" {
+			continue
+		}
+
+		updateQuery = updateQuery + fieldName + " = "
+
+		switch value.(type) {
+		case int:
+			updateQuery = updateQuery + strconv.Itoa(value.(int))
+			break
+		case string:
+			updateQuery = updateQuery + "'" + value.(string) + "'"
+			break
+		case bool:
+			updateQuery = updateQuery + strconv.FormatBool(value.(bool))
+			break
+		default:
+			log.Fatal("Un categorized type found in JSON")
+		}
+
+		if index != maxIndex {
+			updateQuery = updateQuery + ", "
+		}
+
+	}
+
+	updateQuery = updateQuery + " WHERE id = " + params["id"] + ";"
+
+	_, err = db.Query(updateQuery)
+	handleError(err)
+
+	createResponse(w, "item_updated")
 
 }
 
 func deleteItemRecord(w http.ResponseWriter, r *http.Request) {
 
-	params := mux.Vars(r) // /api/items/update/{id}
+	params := mux.Vars(r)
 
-	db, _ := sql.Open("mysql", "root:password@tcp(mariadb:3306)/shoppinglist")
+	var id = selectID(params["id"])
+
+	if id == 0 {
+		IDNotFound(w, r)
+		return
+	}
 
 	_, err := db.Query("DELETE FROM items WHERE id = " + params["id"])
-	if err != nil {
-		log.Panic(err)
-	}
+	handleError(err)
+
+	createResponse(w, "item_deleted")
 
 }
