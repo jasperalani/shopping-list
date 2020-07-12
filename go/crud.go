@@ -21,7 +21,7 @@ var (
 func createItemRecord(w http.ResponseWriter, request *http.Request) {
 
 	var (
-		item     Item
+		item     ItemJSON
 		id       int
 		name     string
 		quantity int
@@ -29,11 +29,13 @@ func createItemRecord(w http.ResponseWriter, request *http.Request) {
 
 	_ = json.NewDecoder(request.Body).Decode(&item)
 
-	checkQuery := "SELECT id, name, quantity FROM items WHERE name LIKE '" + item.Name + "';"
+	checkQuery := "SELECT id, name, quantity FROM items WHERE name LIKE '" + item.Name + "' AND completed = 0;"
 
 	results := db.QueryRow(checkQuery)
 
 	results.Scan(&id, &name, &quantity)
+
+	//log.Println(item)
 
 	if item.Name == name {
 
@@ -86,8 +88,8 @@ func readItemRecord(w http.ResponseWriter, r *http.Request) {
 	)
 
 	query = evaluator(queryScope,
-		"SELECT id, name, url, image_url, person, quantity, deleted FROM items WHERE id = "+params["id"]+";",
-		"SELECT * FROM items;",
+		"SELECT id, name, url, image_url, person, quantity, deleted, completed FROM items WHERE id = "+params["id"]+";",
+		"SELECT * FROM items WHERE deleted = 0 AND completed = 0;",
 	)
 
 	if queryScope {
@@ -100,13 +102,14 @@ func readItemRecord(w http.ResponseWriter, r *http.Request) {
 		}
 
 		item_ = ItemJSON{
-			ID:       item.ID,
-			Name:     item.Name,
-			URL:      item.URL,
-			ImageURL: item.ImageURL,
-			Person:   item.Person,
-			Quantity: item.Quantity,
-			Deleted:  item.Deleted,
+			ID:        item.ID,
+			Name:      item.Name,
+			URL:       item.URL,
+			ImageURL:  item.ImageURL,
+			Person:    item.Person,
+			Quantity:  item.Quantity,
+			Deleted:   item.Deleted,
+			Completed: item.Completed,
 		}
 
 		json.NewEncoder(w).Encode(item_)
@@ -118,17 +121,21 @@ func readItemRecord(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		//log.Println(query)
+
 		err = db.Select(&items, query)
 
 		for _, item := range items {
 			items_ = append(items_, ItemJSON{
-				ID:       item.ID,
-				Name:     item.Name,
-				URL:      item.URL,
-				ImageURL: item.ImageURL,
-				Person:   item.Person,
-				Quantity: item.Quantity,
-				Deleted:  item.Deleted,
+				ID:        item.ID,
+				Name:      item.Name,
+				URL:       item.URL,
+				ImageURL:  item.ImageURL,
+				Person:    item.Person,
+				Quantity:  item.Quantity,
+				Created:   item.Created,
+				Deleted:   item.Deleted,
+				Completed: item.Completed,
 			})
 		}
 
