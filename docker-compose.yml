@@ -45,22 +45,22 @@ services:
     networks:
       - babylon
 
-  react:
-    container_name: ${APP_NAME:?err}-react
-    stdin_open: true
-    build:
-      context: ./react
-      dockerfile: react.Dockerfile
-      args:
-        app_env: ${APP_ENV}
-    volumes:
-      - ./react:/react
-#    depends_on:
-#      - go
-    ports:
-      - "3000:3000"
-    networks:
-      - babylon
+#  react:
+#    container_name: ${APP_NAME:?err}-react
+#    stdin_open: true
+#    build:
+#      context: ./react
+#      dockerfile: react.Dockerfile
+#      args:
+#        app_env: ${APP_ENV}
+#    volumes:
+#      - ./react:/react
+##    depends_on:
+##      - go
+#    ports:
+#      - "3000:3000"
+#    networks:
+#      - babylon
 
 networks:
   babylon:

@@ -15,12 +15,11 @@ import (
 func CreateItemRecord(w http.ResponseWriter, request *http.Request) {
 
 	var (
-		item         ItemJSON
-		id           int
-		name         string
-		quantity     int
-		generatedSql string
-		err          error
+		item     ItemJSON
+		id       int
+		name     string
+		quantity int
+		err      error
 	)
 
 	err = json.NewDecoder(request.Body).Decode(&item)
@@ -28,38 +27,33 @@ func CreateItemRecord(w http.ResponseWriter, request *http.Request) {
 
 	selectItem := sq.Select("id", "name", "quantity").From("items")
 	whereExisting := selectItem.Where(sq.Like{"name": item.Name})
-	notCompleted := whereExisting.Where(sq.Eq{"completed": 0})
+	notCompleted := whereExisting.Where(sq.Eq{"completed": false})
 
-	generatedSql, _, err = notCompleted.ToSql()
-	HandleError(err)
-
-	results := DB.QueryRow(generatedSql)
-
+	results := notCompleted.RunWith(DB).QueryRow()
 	err = results.Scan(&id, &name, &quantity)
-	HandleError(err)
 
-	if item.Name == name {
+	if err != sql.ErrNoRows {
 
 		finalQuantity := item.Quantity + quantity
 
 		updateQuantity := sq.Update("items").Set("quantity", strconv.Itoa(finalQuantity))
 		whereIDMatches := updateQuantity.Where(sq.Eq{"id": strconv.Itoa(id)})
-		generatedSql, _, err = whereIDMatches.ToSql()
-		HandleError(err)
 
-		_, err = DB.Query(generatedSql)
+		_, err := whereIDMatches.RunWith(DB).Query()
 		HandleError(err)
 
 		CreateResponse(w, "quantity_increased")
+		return
 
 	} else {
+		if err != sql.ErrNoRows {
+			HandleError(err)
+		}
 
 		insertInto := sq.Insert("items").Columns("name", "url", "image_url", "person", "quantity")
 		values := insertInto.Values(item.Name, item.URL, item.ImageURL, item.Person, strconv.Itoa(item.Quantity))
-		generatedSql, _, err = values.ToSql()
-		HandleError(err)
 
-		_, err = DB.Query(generatedSql)
+		_, err := values.RunWith(DB).Query()
 		HandleError(err)
 
 		var (
@@ -68,10 +62,7 @@ func CreateItemRecord(w http.ResponseWriter, request *http.Request) {
 		)
 
 		selectMaxID := sq.Select("MAX(id)").From("items")
-		generatedSql, _, err = selectMaxID.ToSql()
-		HandleError(err)
-
-		maxID, err = DB.Query(generatedSql) // this query is not safe
+		maxID, err = selectMaxID.RunWith(DB).Query()
 		HandleError(err)
 
 		if maxID.Next() {
@@ -80,7 +71,6 @@ func CreateItemRecord(w http.ResponseWriter, request *http.Request) {
 		}
 
 		CreateResponse(w, "item_created")
-
 	}
 
 }
@@ -165,13 +155,13 @@ func UpdateItemRecord(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
 	var (
-		id           float32
-		item         ItemJSON
-		fieldName    string
-		values       []interface{}
-		valueTypes   reflect.Type
-		generatedSql string
-		err          error
+		id         float32
+		item       ItemJSON
+		fieldName  string
+		values     []interface{}
+		valueTypes reflect.Type
+		err        error
+		setValues  sq.UpdateBuilder
 	)
 
 	if !AnyItems() {
@@ -199,8 +189,6 @@ func UpdateItemRecord(w http.ResponseWriter, r *http.Request) {
 		values[i] = preInterfacedValues.Field(i).Interface()
 	}
 
-	var setValues sq.UpdateBuilder
-
 	for index, value := range values {
 
 		fieldName = strcase.ToSnake(valueTypes.Field(index).Name)
@@ -212,20 +200,24 @@ func UpdateItemRecord(w http.ResponseWriter, r *http.Request) {
 		var updateValue string
 
 		switch value.(type) {
+		case bool:
+			if value.(bool) {
+				updateValue = "1"
+			} else {
+				updateValue = "0"
+			}
+			break
 		case int:
 			updateValue = strconv.Itoa(value.(int))
 			break
 		case string:
-			updateValue = "'" + value.(string) + "'"
-			break
-		case bool:
-			updateValue = strconv.FormatBool(value.(bool))
+			updateValue = value.(string)
 			break
 		default:
 			log.Fatal("Unknown type found in JSON")
 		}
 
-		if index == 0 {
+		if index == 1 {
 			setValues = updateItems.Set(fieldName, updateValue)
 		} else {
 			setValues = setValues.Set(fieldName, updateValue)
@@ -234,14 +226,12 @@ func UpdateItemRecord(w http.ResponseWriter, r *http.Request) {
 	}
 
 	whereIDMatches := setValues.Where(sq.Eq{"id": params["id"]})
-	generatedSql, _, err = whereIDMatches.ToSql()
-	HandleError(err)
 
-	_, err = DB.Query(generatedSql)
+	_, err = whereIDMatches.RunWith(DB).Query()
 	HandleError(err)
 
 	CreateResponse(w, "item_updated")
-
+	return
 }
 
 func DeleteItemRecord(w http.ResponseWriter, r *http.Request) {
