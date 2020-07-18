@@ -1,3 +1,5 @@
+CREATE DATABASE `shopping-list`;
+
 -- auto-generated definition
 create table items
 (
@@ -21,7 +23,6 @@ create table errors
     err_nodataprovided varchar(255) null,
     err_noitems        varchar(255) null
 );
-
 
 
 INSERT INTO `shopping-list`.errors (err_httpnotfound, err_idnotfound, err_nodataprovided, err_noitems)
