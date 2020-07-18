@@ -1,7 +1,5 @@
 const gulp = require('gulp');
 const sass = require('gulp-sass');
-const changed = require('gulp-changed');
-const minify = require('gulp-minify');
 
 const pre_path = './react/';
 
