@@ -3,32 +3,33 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	//"log"
 	"net/http"
+	//"strconv"
 )
 
-func CreateErrorResponse(w http.ResponseWriter, queryColumn string) bool {
+func createErrorResponse(w http.ResponseWriter, queryColumn string) bool {
 
-	results := DB.QueryRow("SELECT " + queryColumn + " FROM errors;")
+	results := db.QueryRow("SELECT " + queryColumn + " FROM errors;")
 
 	response := &Response{
 		Errno: 1,
 	}
 
 	err = results.Scan(&response.Error)
-	HandleError(err)
+	handleError(err)
 
 	data, err := json.Marshal(response)
-	HandleError(err)
+	handleError(err)
 
 	_, err = w.Write(data)
-	HandleError(err)
+	handleError(err)
 
 	return true
-	//not sure why i am returning true here
 
 }
 
-func CreateResponse(w http.ResponseWriter, response string) {
+func createResponse(w http.ResponseWriter, response string) {
 
 	responseObj := &Response{
 		Response: response,
@@ -36,23 +37,21 @@ func CreateResponse(w http.ResponseWriter, response string) {
 	}
 
 	data, err := json.Marshal(responseObj)
-	HandleError(err)
+	handleError(err)
 
 	_, err = w.Write(data)
-	HandleError(err)
+	handleError(err)
 
 }
 
-func StringEvaluator(subject bool, outcome1 string, outcome2 string) string {
+func evaluator(subject bool, outcome1 string, outcome2 string) string {
 	if subject {
 		return outcome1
 	}
 	return outcome2
 }
 
-//func FunctionEvaluator (subject bool, outcome1 func(Type reflect.Type))
-
-func SelectID(id string) float32 {
+func selectID(id string) float32 {
 
 	/*
 
@@ -63,17 +62,16 @@ func SelectID(id string) float32 {
 
 	var (
 		itemExists bool
-		queryID    = "SELECT id FROM items WHERE id = " + id
+		queryID    string = "SELECT id FROM items WHERE id = " + id
 		item       Item
-		err        error
 	)
 
-	err = DB.Get(&item, queryID)
+	err = db.Get(&item, queryID)
 
 	if err == sql.ErrNoRows {
 		return 0
 	} else {
-		HandleError(err)
+		handleError(err)
 	}
 
 	itemExists = item.ID != 0
@@ -86,14 +84,16 @@ func SelectID(id string) float32 {
 
 }
 
-func AnyItems() bool {
+func anyItems() bool {
 
 	var (
 		items    []Item
-		queryAll = "SELECT * FROM `shopping-list`.items;"
+		queryAll string = "SELECT * FROM `shopping-list`.items;"
 	)
 
-	err = DB.Select(&items, queryAll)
+	err = db.Select(&items, queryAll)
 	return err != sql.ErrNoRows
 
 }
+
+//func funcEvaluator (subject bool, outcome1 func(Type reflect.Type))

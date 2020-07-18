@@ -5,7 +5,6 @@ version: '3'
 services:
 
 #  go:
-#    container_name: ${APP_NAME:?err}-go
 #    build:
 #      context: ./go
 #      dockerfile: go.Dockerfile
@@ -20,7 +19,6 @@ services:
 #      - babylon
 #
 #  redis:
-#    container_name: ${APP_NAME:?err}-redis
 #    image: "redis:alpine"
 #    restart: unless-stopped
 #    networks:
@@ -45,22 +43,16 @@ services:
     networks:
       - babylon
 
-  react:
-    container_name: ${APP_NAME:?err}-react
-    stdin_open: true
-    build:
-      context: ./react
-      dockerfile: react.Dockerfile
-      args:
-        app_env: ${APP_ENV}
-    volumes:
-      - ./react:/react
-#    depends_on:
-#      - go
-    ports:
-      - "3000:3000"
-    networks:
-      - babylon
+#  react:
+#    build:
+#      context: ./react
+#      dockerfile: react.Dockerfile
+#    args:
+#        app_env: ${APP_ENV}
+#    volumes:
+#      - ./react/src:/react/src
+#    ports:
+#      - "8080:8080"
 
 networks:
-  babylon:
+  babylon:    

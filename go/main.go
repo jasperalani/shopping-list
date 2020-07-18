@@ -1,44 +1,29 @@
 package main
 
 import (
+	"database/sql"
+	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
-	_ "github.com/iancoleman/strcase"
-	"github.com/jmoiron/sqlx"
+	_ "github.com/jmoiron/sqlx"
+	"io/ioutil"
 	"log"
 	"net/http"
 )
 
-var DB *sqlx.DB
-
 func main() {
 
-	DB = InitDB()
+	//handleError(sqlxConnectError)
 
+	//Init router
 	r := mux.NewRouter()
-	r.Use(headerMiddleware, requestMiddleware)
 
-	// Handle all preflight request
-	r.Methods("OPTIONS").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, Access-Control-Request-Headers, Access-Control-Request-Method, Connection, Host, Origin, User-Agent, Referer, Cache-Control, X-header")
-		w.WriteHeader(http.StatusNoContent)
-		return
-	})
-
-	// Endpoints
-	var (
-		endpoint        = "/"
-		endpointInteger = "/{id:[0-9]+}"
-	)
-
-	// Route Handlers
-	r.HandleFunc(endpoint, CreateItemRecord).Methods("POST")
-	r.HandleFunc(endpoint, ReadItemRecord).Methods("GET")
-	r.HandleFunc(endpointInteger, ReadItemRecord).Methods("GET")
-	r.HandleFunc(endpointInteger, UpdateItemRecord).Methods("PUT")
-	r.HandleFunc(endpointInteger, DeleteItemRecord).Methods("DELETE")
+	//Router Handlers / Endpoints
+	r.HandleFunc("/", createItemRecord).Methods("POST")
+	r.HandleFunc("/", readItemRecord).Methods("GET")
+	r.HandleFunc("/{id:[0-9]+}", readItemRecord).Methods("GET")
+	r.HandleFunc("/{id:[0-9]+}", updateItemRecord).Methods("PUT")
+	r.HandleFunc("/{id:[0-9]+}", deleteItemRecord).Methods("DELETE")
 
 	r.NotFoundHandler = http.HandlerFunc(HTTPNotFound)
 
@@ -47,25 +32,39 @@ func main() {
 
 }
 
-func headerMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("Access-Control-Allow-Origin", "*")
-		w.Header().Add("Content-Type", "application/json")
-		next.ServeHTTP(w, r)
-	})
-}
+func createDatabase() {
 
-func requestMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Print("Incoming request ", r.Method)
-		next.ServeHTTP(w, r)
-	})
-}
+	db, err := sql.Open("mysql", "root:password@tcp(mariadb:3306)/shoppinglist")
 
-func InitDB() *sqlx.DB {
-	db, err := sqlx.Connect("mysql", "root:password@tcp(127.0.0.1:3306)/shopping-list")
-	HandleError(err)
-	return db
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
+
+	_, err = db.Exec("CREATE DATABASE shoppinglist")
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = db.Exec("USE shoppinglist")
+	if err != nil {
+		panic(err)
+	}
+
+	content, err := ioutil.ReadFile("../table.sql")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Convert []byte to string and print to screen
+	text := string(content)
+	fmt.Println(text)
+
+	//    _,err = db.Exec("CREATE TABLE example ( id integer, data varchar(32) )")
+	//    if err != nil {
+	//        panic(err)
+	//    }
 }
 
 /*
@@ -94,5 +93,8 @@ func InitDB() *sqlx.DB {
     "person": "Jasper",
     "quantity": 2
 }
+
+
+
 
 */

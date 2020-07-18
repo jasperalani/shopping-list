@@ -1,5 +1,3 @@
-CREATE DATABASE `shopping-list`;
-
 -- auto-generated definition
 create table items
 (
@@ -10,9 +8,7 @@ create table items
     image_url varchar(255) null,
     person    varchar(255) null,
     quantity  int          null,
-    created   timestamp         default current_timestamp,
-    deleted   tinyint(1)   null default false,
-    completed tinyint(1)   null default false
+    deleted   tinyint(1)   null default false
 );
 
 -- auto-generated definition
@@ -23,6 +19,7 @@ create table errors
     err_nodataprovided varchar(255) null,
     err_noitems        varchar(255) null
 );
+
 
 
 INSERT INTO `shopping-list`.errors (err_httpnotfound, err_idnotfound, err_nodataprovided, err_noitems)
