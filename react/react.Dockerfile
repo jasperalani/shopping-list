@@ -7,8 +7,8 @@ ENV NPM_CONFIG_LOGLEVEL warn
 ARG app_env
 ENV NODE_ENV $app_env
 
-RUN mkdir -p /frontend
-WORKDIR /frontend
+RUN mkdir -p /react
+WORKDIR /react
 COPY ./ ./
 
 RUN npm install

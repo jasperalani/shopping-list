@@ -3,96 +3,101 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	sq "github.com/Masterminds/squirrel"
 	"github.com/gorilla/mux"
 	"github.com/iancoleman/strcase"
-	_ "github.com/iancoleman/strcase"
-	"github.com/jmoiron/sqlx"
 	"log"
 	"net/http"
 	"reflect"
 	"strconv"
 )
 
-var (
-	databaseUrl string = "root:password@tcp(127.0.0.1:3306)/shopping-list"
-	db, err            = sqlx.Connect("mysql", databaseUrl)
-)
-
-func createItemRecord(w http.ResponseWriter, request *http.Request) {
+func CreateItemRecord(w http.ResponseWriter, request *http.Request) {
 
 	var (
-		item     Item
+		item     ItemJSON
 		id       int
 		name     string
 		quantity int
+		err      error
 	)
 
-	_ = json.NewDecoder(request.Body).Decode(&item)
+	err = json.NewDecoder(request.Body).Decode(&item)
+	HandleError(err)
 
-	checkQuery := "SELECT id, name, quantity FROM items WHERE name LIKE '" + item.Name + "';"
+	selectItem := sq.Select("id", "name", "quantity").From("items")
+	whereExisting := selectItem.Where(sq.Like{"name": item.Name})
+	notCompleted := whereExisting.Where(sq.Eq{"completed": false})
 
-	results := db.QueryRow(checkQuery)
+	results := notCompleted.RunWith(DB).QueryRow()
+	err = results.Scan(&id, &name, &quantity)
 
-	results.Scan(&id, &name, &quantity)
-
-	if item.Name == name {
+	if err != sql.ErrNoRows {
 
 		finalQuantity := item.Quantity + quantity
 
-		updateQuery := "UPDATE items set quantity = " + strconv.Itoa(finalQuantity) + " WHERE id = " + strconv.Itoa(id)
+		updateQuantity := sq.Update("items").Set("quantity", strconv.Itoa(finalQuantity))
+		whereIDMatches := updateQuantity.Where(sq.Eq{"id": strconv.Itoa(id)})
 
-		db.Query(updateQuery)
+		_, err := whereIDMatches.RunWith(DB).Query()
+		HandleError(err)
 
-		createResponse(w, "quantity_increased")
+		CreateResponse(w, "quantity_increased")
+		return
 
 	} else {
+		if err != sql.ErrNoRows {
+			HandleError(err)
+		}
 
-		insertQuery := "INSERT INTO items (name, url, image_url, person, quantity)"
-		insertQuery = insertQuery + "VALUES ('" + item.Name + "', '" + item.URL + "', '" + item.ImageURL + "', '" + item.Person + "', " + strconv.Itoa(item.Quantity) + ")"
+		insertInto := sq.Insert("items").Columns("name", "url", "image_url", "person", "quantity")
+		values := insertInto.Values(item.Name, item.URL, item.ImageURL, item.Person, strconv.Itoa(item.Quantity))
 
-		_, err = db.Query(insertQuery)
-		handleError(err)
+		_, err := values.RunWith(DB).Query()
+		HandleError(err)
 
 		var (
 			maxID *sql.Rows
 			ID    int
 		)
 
-		maxID, err = db.Query("SELECT MAX(id) FROM items") // this query is not safe
-		handleError(err)
+		selectMaxID := sq.Select("MAX(id)").From("items")
+		maxID, err = selectMaxID.RunWith(DB).Query()
+		HandleError(err)
 
 		if maxID.Next() {
 			err = maxID.Scan(&ID)
-			handleError(err)
+			HandleError(err)
 		}
 
-		createResponse(w, "item_created")
-
+		CreateResponse(w, "item_created")
 	}
 
 }
 
-func readItemRecord(w http.ResponseWriter, r *http.Request) {
+func ReadItemRecord(w http.ResponseWriter, r *http.Request) {
 
 	params := mux.Vars(r)
 
 	var (
-		item       Item
-		item_      ItemJSON
-		items      []Item
-		items_     []ItemJSON
-		query      string
-		queryScope bool = len(params) > 0
+		item   Item
+		item_  ItemJSON
+		items  []Item
+		items_ []ItemJSON
+		query  string
+		scope  = len(params) > 0
+		err    error
 	)
 
-	query = evaluator(queryScope,
-		"SELECT id, name, url, image_url, person, quantity, deleted FROM items WHERE id = "+params["id"]+";",
-		"SELECT * FROM items;",
+	query = StringEvaluator(scope,
+		"SELECT id, name, url, image_url, person, quantity, deleted, completed FROM items WHERE id = "+params["id"]+";",
+		"SELECT * FROM items WHERE deleted = 0 AND completed = 0;",
 	)
 
-	if queryScope {
+	if scope {
 
-		err = db.Get(&item, query)
+		err = DB.Get(&item, query)
+		HandleError(err)
 
 		if item.ID == 0 {
 			IDNotFound(w, r)
@@ -100,75 +105,71 @@ func readItemRecord(w http.ResponseWriter, r *http.Request) {
 		}
 
 		item_ = ItemJSON{
-			ID:       item.ID,
-			Name:     item.Name,
-			URL:      item.URL,
-			ImageURL: item.ImageURL,
-			Person:   item.Person,
-			Quantity: item.Quantity,
-			Deleted:  item.Deleted,
+			ID:        item.ID,
+			Name:      item.Name,
+			URL:       item.URL,
+			ImageURL:  item.ImageURL,
+			Person:    item.Person,
+			Quantity:  item.Quantity,
+			Deleted:   item.Deleted,
+			Completed: item.Completed,
 		}
 
-		json.NewEncoder(w).Encode(item_)
+		err = json.NewEncoder(w).Encode(item_)
+		HandleError(err)
 
 	} else {
 
-		if !anyItems() {
+		if !AnyItems() {
 			NoItems(w, r)
 			return
 		}
 
-		err = db.Select(&items, query)
+		err = DB.Select(&items, query)
+		HandleError(err)
+
+		//log.Println(items)
 
 		for _, item := range items {
 			items_ = append(items_, ItemJSON{
-				ID:       item.ID,
-				Name:     item.Name,
-				URL:      item.URL,
-				ImageURL: item.ImageURL,
-				Person:   item.Person,
-				Quantity: item.Quantity,
-				Deleted:  item.Deleted,
+				ID:        item.ID,
+				Name:      item.Name,
+				URL:       item.URL,
+				ImageURL:  item.ImageURL,
+				Person:    item.Person,
+				Quantity:  item.Quantity,
+				Created:   item.Created,
+				Deleted:   item.Deleted,
+				Completed: item.Completed,
 			})
 		}
 
 		err = json.NewEncoder(w).Encode(items_)
-		handleError(err)
+		HandleError(err)
 	}
 
 }
 
-func updateItemRecord(w http.ResponseWriter, r *http.Request) {
-
-	/*
-		{
-			"name": "Marcel",
-			"quantity": 6504
-		}
-		{
-			"name": string,
-			"quantity": int
-		}
-	*/
+func UpdateItemRecord(w http.ResponseWriter, r *http.Request) {
 
 	params := mux.Vars(r)
 
 	var (
-		id          float32
-		item        ItemJSON
-		updateQuery string
-		fieldName   string
-		values      []interface{}
-		valueTypes  reflect.Type
-		maxIndex    int
+		id         float32
+		item       ItemJSON
+		fieldName  string
+		values     []interface{}
+		valueTypes reflect.Type
+		err        error
+		setValues  sq.UpdateBuilder
 	)
 
-	if !anyItems() {
+	if !AnyItems() {
 		NoItems(w, r)
 		return
 	}
 
-	id = selectID(params["id"])
+	id = SelectID(params["id"])
 
 	if id == 0 {
 		IDNotFound(w, r)
@@ -176,9 +177,9 @@ func updateItemRecord(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = json.NewDecoder(r.Body).Decode(&item)
-	handleError(err)
+	HandleError(err)
 
-	updateQuery = "UPDATE items SET "
+	updateItems := sq.Update("items")
 
 	preInterfacedValues := reflect.ValueOf(item)
 	values = make([]interface{}, preInterfacedValues.NumField())
@@ -188,8 +189,6 @@ func updateItemRecord(w http.ResponseWriter, r *http.Request) {
 		values[i] = preInterfacedValues.Field(i).Interface()
 	}
 
-	maxIndex = len(values) - 1
-
 	for index, value := range values {
 
 		fieldName = strcase.ToSnake(valueTypes.Field(index).Name)
@@ -198,51 +197,57 @@ func updateItemRecord(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		updateQuery = updateQuery + fieldName + " = "
+		var updateValue string
 
 		switch value.(type) {
+		case bool:
+			if value.(bool) {
+				updateValue = "1"
+			} else {
+				updateValue = "0"
+			}
+			break
 		case int:
-			updateQuery = updateQuery + strconv.Itoa(value.(int))
+			updateValue = strconv.Itoa(value.(int))
 			break
 		case string:
-			updateQuery = updateQuery + "'" + value.(string) + "'"
-			break
-		case bool:
-			updateQuery = updateQuery + strconv.FormatBool(value.(bool))
+			updateValue = value.(string)
 			break
 		default:
-			log.Fatal("Un categorized type found in JSON")
+			log.Fatal("Unknown type found in JSON")
 		}
 
-		if index != maxIndex {
-			updateQuery = updateQuery + ", "
+		if index == 1 {
+			setValues = updateItems.Set(fieldName, updateValue)
+		} else {
+			setValues = setValues.Set(fieldName, updateValue)
 		}
 
 	}
 
-	updateQuery = updateQuery + " WHERE id = " + params["id"] + ";"
+	whereIDMatches := setValues.Where(sq.Eq{"id": params["id"]})
 
-	_, err = db.Query(updateQuery)
-	handleError(err)
+	_, err = whereIDMatches.RunWith(DB).Query()
+	HandleError(err)
 
-	createResponse(w, "item_updated")
-
+	CreateResponse(w, "item_updated")
+	return
 }
 
-func deleteItemRecord(w http.ResponseWriter, r *http.Request) {
+func DeleteItemRecord(w http.ResponseWriter, r *http.Request) {
 
 	params := mux.Vars(r)
 
-	var id = selectID(params["id"])
+	var id = SelectID(params["id"])
 
 	if id == 0 {
 		IDNotFound(w, r)
 		return
 	}
 
-	_, err := db.Query("DELETE FROM items WHERE id = " + params["id"])
-	handleError(err)
+	_, err := DB.Query("DELETE FROM items WHERE id = " + params["id"])
+	HandleError(err)
 
-	createResponse(w, "item_deleted")
+	CreateResponse(w, "item_deleted")
 
 }

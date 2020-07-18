@@ -1,0 +1,28 @@
+#shopping-list-app {
+  text-align: center;
+
+  img#logo {
+    height: 15vmin;
+    margin: 5vmin 7vmin 3vmin;
+
+    //@media (prefers-reduced-motion: no-preference) {
+    //  animation: App-logo-spin infinite 20s linear;
+    //}
+
+  }
+
+  header#header {
+    margin-bottom: 60px;
+  }
+}
+
+
+//@keyframes App-logo-spin {
+//  from {
+//    transform: rotate(0deg);
+//  }
+//  to {
+//    transform: rotate(360deg);
+//  }
+//}
+

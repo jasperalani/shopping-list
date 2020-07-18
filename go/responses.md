@@ -1,6 +1,8 @@
-- key: `item_created`
-- key: `quantity_increased`
-- item object
-- array of item objects
-- key: `item_updated`
-- key: `item_deleted`
+- POST: `item_created`
+- POST: `quantity_increased`
+- PUT: `item_updated`
+- DELETE: `item_deleted`
+
+
+- GET: item object
+- GET: array of item objects
