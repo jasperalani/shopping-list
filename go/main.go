@@ -1,23 +1,19 @@
-// TODO: Split Response and ErrorResponse structs
-
 package main
 
 import (
-	"database/sql"
-	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
-	_ "github.com/jmoiron/sqlx"
-	"io/ioutil"
+	_ "github.com/iancoleman/strcase"
+	"github.com/jmoiron/sqlx"
 	"log"
 	"net/http"
 )
 
+var DB *sqlx.DB
+
 func main() {
 
-	//handleError(sqlxConnectError)
-
-	//Init router
+	DB = InitDB()
 
 	r := mux.NewRouter()
 	r.Use(headerMiddleware, requestMiddleware)
@@ -31,12 +27,18 @@ func main() {
 		return
 	})
 
-	//Router Handlers / Endpoints
-	r.HandleFunc("/", createItemRecord).Methods("POST")
-	r.HandleFunc("/", readItemRecord).Methods("GET")
-	r.HandleFunc("/{id:[0-9]+}", readItemRecord).Methods("GET")
-	r.HandleFunc("/{id:[0-9]+}", updateItemRecord).Methods("PUT")
-	r.HandleFunc("/{id:[0-9]+}", deleteItemRecord).Methods("DELETE")
+	// Endpoints
+	var (
+		endpoint        = "/"
+		endpointInteger = "/{id:[0-9]+}"
+	)
+
+	// Route Handlers
+	r.HandleFunc(endpoint, CreateItemRecord).Methods("POST")
+	r.HandleFunc(endpoint, ReadItemRecord).Methods("GET")
+	r.HandleFunc(endpointInteger, ReadItemRecord).Methods("GET")
+	r.HandleFunc(endpointInteger, UpdateItemRecord).Methods("PUT")
+	r.HandleFunc(endpointInteger, DeleteItemRecord).Methods("DELETE")
 
 	r.NotFoundHandler = http.HandlerFunc(HTTPNotFound)
 
@@ -60,39 +62,10 @@ func requestMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func createDatabase() {
-
-	db, err := sql.Open("mysql", "root:password@tcp(mariadb:3306)/shoppinglist")
-
-	if err != nil {
-		panic(err)
-	}
-	defer db.Close()
-
-	_, err = db.Exec("CREATE DATABASE shoppinglist")
-	if err != nil {
-		panic(err)
-	}
-
-	_, err = db.Exec("USE shoppinglist")
-	if err != nil {
-		panic(err)
-	}
-
-	content, err := ioutil.ReadFile("../table.sql")
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Convert []byte to string and print to screen
-	text := string(content)
-	fmt.Println(text)
-
-	//    _,err = db.Exec("CREATE TABLE example ( id integer, data varchar(32) )")
-	//    if err != nil {
-	//        panic(err)
-	//    }
+func InitDB() *sqlx.DB {
+	db, err := sqlx.Connect("mysql", "root:password@tcp(127.0.0.1:3306)/shopping-list")
+	HandleError(err)
+	return db
 }
 
 /*
@@ -121,8 +94,5 @@ func createDatabase() {
     "person": "Jasper",
     "quantity": 2
 }
-
-
-
 
 */

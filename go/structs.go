@@ -1,9 +1,7 @@
 package main
 
-/*
- Item
-*/
-// To be renamed to ItemDB
+/* Item
+TODO: Rename to ItemDB */
 type Item struct {
 	ID        int    `db:"id"`
 	Name      string `db:"name"`
@@ -16,9 +14,7 @@ type Item struct {
 	Completed bool   `db:"completed"`
 }
 
-/*
- ItemJSON
-*/
+/* ItemJSON */
 type ItemJSON struct {
 	ID        int    `json:"id"`
 	Name      string `json:"name"`
@@ -31,9 +27,8 @@ type ItemJSON struct {
 	Completed bool   `json:"completed"`
 }
 
-/*
- Response
-*/
+/* Response
+TODO: Split Response struct into Response and ErrorResponse */
 type Response struct {
 	Response string `json:"response"`
 	Errno    int    `json:"errno"`
