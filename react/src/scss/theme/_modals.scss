@@ -1,0 +1,38 @@
+main#main {
+  .modals {
+
+    #settings-modal {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+
+      button {
+        border: none;
+      }
+
+      i {
+        font-size: 20px;
+      }
+    }
+
+  }
+}
+
+
+.list-item-modal {
+  .item-attribute {
+    input {
+      height: 10%;
+      width: 50%;
+    }
+    p {
+      margin-right: 6px;
+    }
+
+    &.notes {
+      p {
+        margin-bottom: 0;
+      }
+    }
+  }
+}

@@ -1,5 +1,13 @@
 #shopping-list-app {
   text-align: center;
+  //height: 100vh;
+
+  background: gainsboro;
+
+  @include media-breakpoint-down(sm) {
+    background-size: cover;
+    background: url("../res/sunlight-background.jpg") repeat-y center;
+  }
 
   img#logo {
     height: 15vmin;
@@ -13,6 +21,16 @@
 
   header#header {
     margin-bottom: 60px;
+  }
+
+  footer {
+    margin-top: 35px;
+
+    .return-to-top {
+      position: absolute;
+      right: 6px;
+      font-size: 110%;
+    }
   }
 }
 

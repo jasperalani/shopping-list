@@ -3,9 +3,12 @@ import React from 'react'
 class ItemAction extends React.Component {
   constructor (props) {
     super(props)
+
     this.state = {
-      id: 0
+        id: 0
     }
+
+    // this.props.finishListItem = this.props.finishListItem.bind(this);
   }
 
   componentDidMount () {
@@ -13,35 +16,36 @@ class ItemAction extends React.Component {
   }
 }
 
-export class CompleteItem extends ItemAction {
-
-  toggleButtonState = () => {
-
-    const localData = this.props.data;
-    localData.completed = true;
-    const json = JSON.stringify(localData);
-    const headers = {
-      method: "PUT",
-      body: json
-    }
-
-    fetch("http://localhost:10000/" + localData.id, headers)
-    .then(res => (res.ok ? res : Promise.reject(res)))
-    .then(res => res.json().then(json => {
-      console.log(json.response)
-      if(json.response === "item_updated"){
-        this.props.finishItem(this.state.id)
-      }
-    }))
-
-  };
-
-  render () {
-    return (
-      <i className="fas fa-check" onClick={this.toggleButtonState}/>
-    )
-  }
-}
+// export class CompleteItem extends ItemAction {
+//
+//   toggleButtonState = () => {
+//
+//     const localData = this.props.data;
+//     localData.completed = true;
+//     const json = JSON.stringify(localData);
+//     const headers = {
+//       method: "PUT",
+//       body: json
+//     }
+//
+//     fetch("http://localhost:10000/" + localData.id, headers)
+//     .then(res => (res.ok ? res : Promise.reject(res)))
+//     .then(res => res.json().then(json => {
+//       console.log(json.response === "item_updated")
+//       if(json.response === "item_updated"){
+//         console.log(this.state.id)
+//         this.props.finishItem(this.state.id)
+//       }
+//     }))
+//
+//   };
+//
+//   render () {
+//     return (
+//       <i className="fas fa-check" onClick={this.toggleButtonState}/>
+//     )
+//   }
+// }
 
 export class RemoveItem extends ItemAction {
 
@@ -50,6 +54,7 @@ export class RemoveItem extends ItemAction {
     fetch("http://localhost:10000/" + this.state.id, {method: "DELETE"})
     .then(res => (res.ok ? res : Promise.reject(res)))
     .then(res => res.json().then(json => {
+      console.log("item_deleted: " + json.response === "item_deleted")
       if(json.response === "item_deleted"){
         this.props.finishItem(this.state.id)
       }
@@ -59,7 +64,9 @@ export class RemoveItem extends ItemAction {
 
   render () {
     return (
-      <i className="fas fa-times" onClick={this.toggleButtonState}/>
+        <p className={"remove"}>
+          <small onTouchStart={this.toggleButtonState} onClick={this.toggleButtonState}>Remove</small>
+        </p>
     )
   }
 

@@ -1,14 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="WEB_MODULE" version="4">
+  <component name="Go" enabled="true" />
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="bootstrap" level="application" />
-    <orderEntry type="library" name="b95569876c" level="application" />
-    <orderEntry type="library" name="jquery-3.5.1" level="application" />
-    <orderEntry type="library" name="free-v4-shims" level="application" />
-    <orderEntry type="library" name="free-v4-font-face" level="application" />
-    <orderEntry type="library" name="free" level="application" />
+    <orderEntry type="module" module-name="my-app" />
   </component>
 </module>

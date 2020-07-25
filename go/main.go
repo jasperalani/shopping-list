@@ -7,13 +7,15 @@ import (
 	"github.com/jmoiron/sqlx"
 	"log"
 	"net/http"
+	"time"
 )
 
 var DB *sqlx.DB
 
 func main() {
 
-	DB = InitDB()
+	DB, err = InitDB()
+	HandleError(err)
 
 	r := mux.NewRouter()
 	r.Use(headerMiddleware, requestMiddleware)
@@ -62,10 +64,19 @@ func requestMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func InitDB() *sqlx.DB {
-	db, err := sqlx.Connect("mysql", "root:password@tcp(127.0.0.1:3306)/shopping-list")
-	HandleError(err)
-	return db
+func InitDB() (*sqlx.DB, error){
+
+	var tries int = 10
+	for i := 0; i < tries; i++ {
+		db, err := sqlx.Connect("mysql", "root:password@tcp(mariadb:3306)/shopping-list")
+		if err == nil {
+			return db, nil
+		}
+		time.Sleep(3 * time.Second)
+	}
+
+	log.Println("Fatal error: could not connect to database")
+	return nil, err
 }
 
 /*

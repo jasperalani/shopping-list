@@ -1,21 +1,17 @@
 import React from 'react'
 import { ListItem } from './ListItem'
+import constants from '../constants'
 
 // import { useAsync } from 'react-async'
 
-export class List extends React.Component {
+class List extends React.Component {
   constructor (props) {
     super(props)
 
     this.state = {
       data: null,
+      lastAddedItem: ''
     }
-  }
-
-  componentDidMount () { // eslint-disable-next-line
-    fetch('http://localhost:10000/'). // eslint-disable-next-line
-    then(res => (res.ok ? res : Promise.reject(res))).
-      then(res => res.json().then(json => this.setState({ data: json })))
   }
 
   finishListItem = (id) => {
@@ -75,8 +71,24 @@ export class List extends React.Component {
       }
     }
 
-    return listItems
+    return listItems.reverse()
 
+  }
+
+  getJSON () {// eslint-disable-next-line
+    fetch(constants.go_endpoint). // eslint-disable-next-line
+        then(res => (res.ok ? res : Promise.reject(res))).
+        then(res => res.json().then(json => this.setState({ data: json })))
+  }
+
+  componentDidMount () {
+    this.getJSON()
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if(nextProps.lastAddedItem !== this.state.lastAddedItem){
+      this.getJSON()
+    }
   }
 
   render () {
@@ -90,3 +102,5 @@ export class List extends React.Component {
   }
 
 }
+
+export default List;

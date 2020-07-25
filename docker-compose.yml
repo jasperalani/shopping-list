@@ -4,27 +4,28 @@ version: '3'
 
 services:
 
-#  go:
-#    container_name: ${APP_NAME:?err}-go
-#    build:
-#      context: ./go
-#      dockerfile: go.Dockerfile
-#    ports:
-#      - "10000:10000"
-#    restart: unless-stopped
-#    depends_on:
-#      - redis
-#    environment:
-#      REDIS_URL: redis:6379
-#    networks:
-#      - babylon
-#
-#  redis:
-#    container_name: ${APP_NAME:?err}-redis
-#    image: "redis:alpine"
-#    restart: unless-stopped
-#    networks:
-#      - babylon
+  go:
+    container_name: ${APP_NAME:?err}-go
+    build:
+      context: ./go
+      dockerfile: go.Dockerfile
+    ports:
+      - "10000:10000"
+    restart: unless-stopped
+    depends_on:
+       - mariadb
+       - redis
+    environment:
+      REDIS_URL: redis:6379
+    networks:
+      - babylon
+
+  redis:
+    container_name: ${APP_NAME:?err}-redis
+    image: "redis:alpine"
+    restart: unless-stopped
+    networks:
+      - babylon
 
   mariadb:
     image: mariadb:10.3.9
@@ -45,22 +46,20 @@ services:
     networks:
       - babylon
 
-#  react:
-#    container_name: ${APP_NAME:?err}-react
-#    stdin_open: true
-#    build:
-#      context: ./react
-#      dockerfile: react.Dockerfile
-#      args:
-#        app_env: ${APP_ENV}
-#    volumes:
-#      - ./react:/react
-##    depends_on:
-##      - go
-#    ports:
-#      - "3000:3000"
-#    networks:
-#      - babylon
+  react:
+    container_name: ${APP_NAME:?err}-react
+    stdin_open: true
+    build:
+      context: ./react
+      dockerfile: react.Dockerfile
+      args:
+        app_env: ${APP_ENV}
+    volumes:
+      - ./react:/react
+    ports:
+      - "3000:3000"
+    networks:
+      - babylon
 
 networks:
   babylon:

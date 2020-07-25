@@ -1,3 +1,7 @@
+@import "../node_modules/bootstrap/scss/functions";
+@import "../node_modules/bootstrap/scss/variables";
+@import "../node_modules/bootstrap/scss/mixins/breakpoints";
+
 $font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
 sans-serif;
@@ -7,7 +11,10 @@ $font-awesome: 'FontAwesome';
 // Colour scheme: https://coolors.co/231f20-bb4430-7ebdc2-f3dfa2-efe6dd
 
 $raisin-black: #231F20;
-$international-orange-golden-gate-bridge: #BB4430;
+$international-orange-golden-gate-bridge: #bb4430;
 $middle-blue: #7EBDC2;
 $medium-champagne: #7EBDC2;
 $linen: #7EBDC2;
+
+$border-odd: #dae0e5;
+$border-even: #adb5bd;
