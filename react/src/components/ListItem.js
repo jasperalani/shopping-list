@@ -15,7 +15,9 @@ export class ListItem extends React.Component {
 
     this.state = {
       show: false,
-      pictures: []
+      pictures: [],
+      uploading: false,
+      imageId: 0,
     };
     this.onDrop = this.onDrop.bind(this);
   }
@@ -43,6 +45,29 @@ export class ListItem extends React.Component {
     }
   }
 
+  onChange = () => {
+    const file = this.state.pictures[0];
+    const formData = new FormData()
+    formData.append('file', file);
+
+    const headers = {
+      method: 'POST',
+      body: formData,
+      mode: 'cors'
+    };
+
+    fetch('http://localhost:8888/image', headers)
+        .then(res => console.log(res.headers));
+    // .then(res => res.json())
+    // .then(image => {
+    //   // console.log(image)
+    //   // this.setState({
+    //   //   uploading: false,
+    //   //   imageId
+    //   // })
+    // })
+  }
+
   handleClose = () => {
     this.setState({show: false});
   };
@@ -52,8 +77,6 @@ export class ListItem extends React.Component {
   };
 
   render() {
-
-    // console.log(this.props.data.image_url)
 
     return (
         <div className={'list-item-wrapper'}>
@@ -84,14 +107,11 @@ export class ListItem extends React.Component {
 
                   <form>
 
-                    {/*<input type='file' id='multi'  multiple />*/}
-
-
                     <ImageUploader
                         withIcon={true}
                         buttonText='Choose image'
                         onChange={this.onDrop}
-                        imgExtension={['.jpg', '.gif', '.png', '.gif']}
+                        imgExtension={['.jpg', '.jpeg', '.gif', '.png']}
                         maxFileSize={5242880}
                     />
 
@@ -125,7 +145,7 @@ export class ListItem extends React.Component {
                   <button className={'btn-light'} onClick={this.handleClose}>
                     Close
                   </button>
-                  <button className={'btn-light'} onClick={this.handleClose}>
+                  <button className={'btn-light'} onClick={this.onChange}>
                     Save Changes
                   </button>
                 </Modal.Footer>
@@ -141,28 +161,28 @@ export class ListItem extends React.Component {
 
 }
 
-{/*<p>{this.props.data.id}</p>*/}
-
-{/*<img className={'image'} key={'li-' + this.props.data.id + '-image'}*/}
-{/*     src={this.props.data.image_url} alt={this.props.data.name}/>*/}
-
-{/*<div className={'division-one'}>*/}
-{/*  {this.displayUrl()}*/}
-{/*  <p className={'quantity'}*/}
-{/*     key={'li-' + this.props.data.id + '-quantity'}>*/}
-{/*    Qty: {this.props.data.quantity}</p>*/}
-{/*</div>*/}
-
-{/*<div className={'division-two'}>*/}
-{/*  <p className={'person'}*/}
-{/*     key={'li-' + this.props.data.id + '-person'}>*/}
-{/*    <small>Requested by:</small><br/>*/}
-{/*    {this.props.data.person}*/}
-{/*  </p>*/}
-{/*  <p className={'created'}*/}
-{/*     key={'li-' + this.props.data.id + '-created'}>*/}
-{/*    <small>Requested on:</small><br/>*/}
-{/*    <DateDisplayer date={this.props.data.created} />*/}
-
-{/*  </p>*/}
-{/*</div>*/}
+// {/*<p>{this.props.data.id}</p>*/}
+//
+// {/*<img className={'image'} key={'li-' + this.props.data.id + '-image'}*/}
+// {/*     src={this.props.data.image_url} alt={this.props.data.name}/>*/}
+//
+// {/*<div className={'division-one'}>*/}
+// {/*  {this.displayUrl()}*/}
+// {/*  <p className={'quantity'}*/}
+// {/*     key={'li-' + this.props.data.id + '-quantity'}>*/}
+// {/*    Qty: {this.props.data.quantity}</p>*/}
+// {/*</div>*/}
+//
+// {/*<div className={'division-two'}>*/}
+// {/*  <p className={'person'}*/}
+// {/*     key={'li-' + this.props.data.id + '-person'}>*/}
+// {/*    <small>Requested by:</small><br/>*/}
+// {/*    {this.props.data.person}*/}
+// {/*  </p>*/}
+// {/*  <p className={'created'}*/}
+// {/*     key={'li-' + this.props.data.id + '-created'}>*/}
+// {/*    <small>Requested on:</small><br/>*/}
+// {/*    <DateDisplayer date={this.props.data.created} />*/}
+//
+// {/*  </p>*/}
+// {/*</div>*/}
