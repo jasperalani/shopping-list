@@ -4,21 +4,51 @@ version: '3'
 
 services:
 
-  go:
-    container_name: ${APP_NAME:?err}-go
-    build:
-      context: ./go
-      dockerfile: go.Dockerfile
-    ports:
-      - "10000:10000"
-    restart: unless-stopped
-    depends_on:
-       - mariadb
-       - redis
-    environment:
-      REDIS_URL: redis:6379
-    networks:
-      - babylon
+#  php:
+#    image: 'php:7.2-fpm'
+#    build:
+#      context: ./php
+#      dockerfile: php.Dockerfile
+#    container_name: ${APP_NAME:?err}-php
+#    ports:
+#      - '9000:9000'
+#    links:
+#      - 'mariadb'
+#    volumes:
+#      - './php:/var/www/html'
+#    networks:
+#      - babylon
+#
+#  nginx:
+#    image: nginx:latest
+#    container_name: ${APP_NAME:?err}-nginx
+#    ports:
+#      - '81:81'
+#      - '444:444'
+#    depends_on:
+#      - php
+#    links:
+#      - 'php'
+#    volumes:
+#      - './php:/var/www/html'
+#      - './config/nginx:/etc/nginx/conf.d'
+#  go:
+#    container_name: ${APP_NAME:?err}-go
+#    build:
+#      context: ./go
+#      dockerfile: go.Dockerfile
+#    ports:
+#      - "10000:10000"
+#    restart: unless-stopped
+#    depends_on:
+#      - mariadb
+#      - redis
+##    volumes:
+##      - './go:/app'
+#    environment:
+#      REDIS_URL: redis:6379
+#    networks:
+#      - babylon
 
   redis:
     container_name: ${APP_NAME:?err}-redis

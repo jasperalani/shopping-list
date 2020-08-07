@@ -1,10 +1,9 @@
 import React, {useState} from 'react';
+import axios from 'axios';
+
 import {RemoveItem} from './ItemActions';
-import Modal from 'react-bootstrap/Modal';
-import DateDisplayer from './DateDisplayer';
-import ImageUploader from 'react-images-upload';
-
-
+import ModalListItem from './modals/ListItem';
+import constants from '../constants';
 
 // import DateDisplayer from './DateDisplayer'
 
@@ -14,6 +13,8 @@ export class ListItem extends React.Component {
     super(props);
 
     this.state = {
+      id: this.props.data.id,
+      data: this.props.data,
       show: false,
       pictures: [],
       uploading: false,
@@ -45,28 +46,31 @@ export class ListItem extends React.Component {
     }
   }
 
-  onChange = () => {
-    const file = this.state.pictures[0];
-    const formData = new FormData()
-    formData.append('file', file);
+  onSaveChanges = () => {
 
-    const headers = {
-      method: 'POST',
-      body: formData,
-      mode: 'cors'
-    };
+    // Save picture to database
+    const pictures = this.state.pictures;
+    if (pictures.length > 0 && pictures.length < 2) {
+      const data = new FormData();
+      data.append('file', pictures[0]);
+      axios.post(constants.php_post, data).then(async res => {
+        console.log("saving image:" + res)
+        await this.saveImageIdToDatabase(res);
+      });
+    }
 
-    fetch('http://localhost:8888/image', headers)
-        .then(res => console.log(res.headers));
-    // .then(res => res.json())
-    // .then(image => {
-    //   // console.log(image)
-    //   // this.setState({
-    //   //   uploading: false,
-    //   //   imageId
-    //   // })
-    // })
-  }
+  };
+
+  saveImageIdToDatabase = async (imageid) => {
+
+    const data = new FormData();
+    data.append('id', this.state.id);
+    data.append('image_id', imageid.data.image_id);
+    axios.put(constants.go_endpoint, data).then(async res => {
+      console.log("saving id:" + res)
+    });
+
+  };
 
   handleClose = () => {
     this.setState({show: false});
@@ -98,59 +102,10 @@ export class ListItem extends React.Component {
 
           <div id={'list-item-modal'}>
 
-            <Modal show={this.state.show} onHide={this.handleClose}>
-              <div className={'list-item-modal'}>
-                <Modal.Header closeButton>
-                  <Modal.Title>{this.props.data.name}</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-
-                  <form>
-
-                    <ImageUploader
-                        withIcon={true}
-                        buttonText='Choose image'
-                        onChange={this.onDrop}
-                        imgExtension={['.jpg', '.jpeg', '.gif', '.png']}
-                        maxFileSize={5242880}
-                    />
-
-                    {/*<img className={'oranges-image'}*/}
-                    {/*     src={'https://lh3.googleusercontent.com/proxy/9aY-f3Q_yhoI2lPBmTU9UZSmlGye0sfxmX9QQcI-n-3pmpbgcGsjxPbeAonfJMKUocUCOt8U1XyvLmf0rF520TsbNWdf2PQpm8yCOoIWj7VhmJPReS4p'}*/}
-                    {/*     alt={this.props.data.name}/>*/}
-
-                    <div className={'d-flex item-attribute requested-by'}>
-                      <p>Requested By:</p>
-                      <input></input>
-                    </div>
-
-
-                    <div className={'d-flex item-attribute quantity'}>
-                      <p>Quantity:</p>
-                      <input></input>
-                    </div>
-
-                    <p>Date Requested: <DateDisplayer
-                        date={this.props.data.created}/></p>
-
-                    <div className={'d-flex flex-column item-attribute notes'}>
-                      <p>Notes</p>
-                      <textarea></textarea>
-                    </div>
-
-                  </form>
-
-                </Modal.Body>
-                <Modal.Footer>
-                  <button className={'btn-light'} onClick={this.handleClose}>
-                    Close
-                  </button>
-                  <button className={'btn-light'} onClick={this.onChange}>
-                    Save Changes
-                  </button>
-                </Modal.Footer>
-              </div>
-            </Modal>
+            <ModalListItem show={this.state.show}
+              data={this.props.data} close={this.handleClose}
+              drop={this.onDrop} click={this.onSaveChanges}
+            />
 
           </div>
 

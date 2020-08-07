@@ -50,8 +50,8 @@ func CreateItemRecord(w http.ResponseWriter, request *http.Request) {
 			HandleError(err)
 		}
 
-		insertInto := sq.Insert("items").Columns("name", "url", "image_url", "person", "quantity")
-		values := insertInto.Values(item.Name, item.URL, item.ImageURL, item.Person, strconv.Itoa(item.Quantity))
+		insertInto := sq.Insert("items").Columns("name", "url", "person", "quantity")
+		values := insertInto.Values(item.Name, item.URL, item.Person, strconv.Itoa(item.Quantity))
 
 		_, err := values.RunWith(DB).Query()
 		HandleError(err)
@@ -89,10 +89,10 @@ func ReadItemRecord(w http.ResponseWriter, r *http.Request) {
 		err    error
 	)
 
-	query = StringEvaluator(scope,
-		"SELECT id, name, url, image_url, person, quantity, deleted, completed FROM items WHERE id = "+params["id"]+";",
-		"SELECT * FROM items WHERE deleted = 0 AND completed = 0;",
-	)
+    query = "SELECT * FROM items WHERE "
+    query = query + StringEvaluator(scope,
+        "id = " + params["id"] + ";",
+        "deleted = 0 AND completed = 0;")
 
 	if scope {
 
@@ -105,14 +105,16 @@ func ReadItemRecord(w http.ResponseWriter, r *http.Request) {
 		}
 
 		item_ = ItemJSON{
-			ID:        item.ID,
-			Name:      item.Name,
-			URL:       item.URL,
-			ImageURL:  item.ImageURL,
-			Person:    item.Person,
-			Quantity:  item.Quantity,
-			Deleted:   item.Deleted,
-			Completed: item.Completed,
+			ID:          item.ID,
+			Name:        item.Name,
+			URL:         item.URL,
+			ImageID:     item.ImageID,
+			Person:      item.Person,
+			Quantity:    item.Quantity,
+			Created: item.Created,
+			Deleted:     item.Deleted,
+			Completed:   item.Completed,
+			CompletedOn: item.CompletedOn,
 		}
 
 		err = json.NewEncoder(w).Encode(item_)
@@ -132,15 +134,16 @@ func ReadItemRecord(w http.ResponseWriter, r *http.Request) {
 
 		for _, item := range items {
 			items_ = append(items_, ItemJSON{
-				ID:        item.ID,
-				Name:      item.Name,
-				URL:       item.URL,
-				ImageURL:  item.ImageURL,
-				Person:    item.Person,
-				Quantity:  item.Quantity,
-				Created:   item.Created,
-				Deleted:   item.Deleted,
-				Completed: item.Completed,
+				ID:          item.ID,
+				Name:        item.Name,
+				URL:         item.URL,
+				ImageID:     item.ImageID,
+				Person:      item.Person,
+				Quantity:    item.Quantity,
+				Created:     item.Created,
+				Deleted:     item.Deleted,
+				Completed:   item.Completed,
+				CompletedOn: item.CompletedOn,
 			})
 		}
 

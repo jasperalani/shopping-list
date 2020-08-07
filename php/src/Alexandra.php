@@ -55,7 +55,7 @@ class Alexandra
                     );
                 }
 
-                if (empty($files['Image'])) {
+                if (empty($files['file'])) {
                     return Alexandra::$response->response(
                         ['error' => 'file supplied is not an image'],
                         $response
@@ -91,10 +91,10 @@ class Alexandra
 
                 $id = $result->fetch_row()[0];
 
-                $file_type     = $files['Image']['type'];
+                $file_type     = $files['file']['type'];
                 $file_ext      = explode('/', $file_type)[1];
                 $file_name     = $id . '.' . $file_ext;
-                $file_tmp_name = $files['Image']['tmp_name'];
+                $file_tmp_name = $files['file']['tmp_name'];
 
                 $saveExtension = "UPDATE images SET ext = '" . $file_ext . "' WHERE id = " . $id . ";";
                 $result        = Alexandra::$db->query($saveExtension);

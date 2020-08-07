@@ -15,54 +15,6 @@ class ItemCreator extends React.Component {
     this.state = {value: ''};
   }
 
-  renderForm = () => {
-
-    let form = '', actionButtonText = 'Add new';
-    if (!this.state.renderForm) {
-      form = <>
-        <form id={'item-creator-form'}>
-          <label>
-            Name *:
-            <input type="text" name="name"/>
-          </label>
-
-          <label>
-            URL:
-            <input type="text" name="url"/>
-          </label>
-
-          <label>
-            Image URL:
-            <input type="text" name="imageurl"/>
-          </label>
-
-          <label>
-            Person *:
-            <input type="text" name="person"/>
-          </label>
-
-          <label>
-            Quantity:
-            <input type="text" name="quantity"/>
-          </label>
-
-          <input type="submit" value="Submit"/>
-        </form>
-      </>;
-      actionButtonText = 'Cancel';
-    }
-
-    this.setState({
-      renderForm: !this.state.renderForm,
-      formHTML: form,
-      actionButtonText: actionButtonText,
-    });
-  };
-
-  handleChange = (event) => {
-    this.setState({value: event.target.value});
-  }
-
   addItem = () => {
 
     const newItem = {
@@ -81,7 +33,7 @@ class ItemCreator extends React.Component {
     fetch(constants.go_endpoint, headers)
     .then(res => (res.ok ? res : Promise.reject(res)))
     .then(res => res.json().then(json => {
-      console.log(json)
+      // console.log(json)
       // console.log(json.response === "item_created")
       if(json.response === "item_created" || json.response === "quantity_increased"){
         // console.log(newItem)
@@ -90,6 +42,10 @@ class ItemCreator extends React.Component {
       }
     }))
 
+  }
+
+  handleChange = (event) => {
+    this.setState({value: event.target.value});
   }
 
   _handleKeyDown = (e) => {
@@ -103,7 +59,6 @@ class ItemCreator extends React.Component {
         <div id={'item-creator'} className={'container'}>
           <div className={'row'}>
             <div className={'col'}>
-              {/*{this.state.formHTML}*/}
               <input placeholder={'What would you like to add?'} value={this.state.value} onChange={this.handleChange} onKeyDown={this._handleKeyDown}/>
               <button className={'form-action-button'} onClick={this.addItem}>
                 Add
@@ -113,6 +68,7 @@ class ItemCreator extends React.Component {
         </div>
     );
   }
+
 }
 
 export default ItemCreator;

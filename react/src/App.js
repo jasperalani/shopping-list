@@ -25,10 +25,10 @@ export class App extends React.Component {
 
   getData = () => {
     const that = this;
-    fetch('http://localhost:10000/', {method: 'GET'}).
+    fetch(constants.go_endpoint, {method: 'GET'}).
         then(res => (res.ok ? res : Promise.reject(res))).
         then(res => res.json().then(json => {
-          console.log(json);
+          // console.log(json);
           that.setState({data: json});
         }));
   };
@@ -41,7 +41,6 @@ export class App extends React.Component {
     this.setState({
       lastAddedItem: newItem,
     });
-    // window.location.reload(false);
   };
 
   render() {

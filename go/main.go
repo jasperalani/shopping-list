@@ -7,6 +7,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -22,9 +23,9 @@ func main() {
 
 	// Handle all preflight request
 	r.Methods("OPTIONS").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, Access-Control-Request-Headers, Access-Control-Request-Method, Connection, Host, Origin, User-Agent, Referer, Cache-Control, X-header")
+		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+		w.Header().Set("Access-Control-Allow-Methods", "PUT, POST, GET, OPTIONS, DELETE")
+		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Access-Control-Request-Headers, Access-Control-Request-Method")
 		w.WriteHeader(http.StatusNoContent)
 		return
 	})
@@ -66,16 +67,21 @@ func requestMiddleware(next http.Handler) http.Handler {
 
 func InitDB() (*sqlx.DB, error){
 
-	var tries int = 10
-	for i := 0; i < tries; i++ {
-		db, err := sqlx.Connect("mysql", "root:password@tcp(mariadb:3306)/shopping-list")
+	var tries int = 5
+	for i := 1; i < (tries + 1); i++ {
+		db, err := sqlx.Connect("mysql", "root:password@tcp(127.0.0.1:3306)/shopping-list")
 		if err == nil {
+			log.Print("Successfully connected to database.")
 			return db, nil
 		}
-		time.Sleep(3 * time.Second)
+		if i == 1 {
+			log.Print("Trying to connect to database...")
+		}
+		log.Print("Attempt " + strconv.Itoa(i))
+		time.Sleep(2 * time.Second)
 	}
 
-	log.Println("Fatal error: could not connect to database")
+	log.Fatal("Fatal error: could not connect to database")
 	return nil, err
 }
 

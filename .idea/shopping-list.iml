@@ -2,7 +2,20 @@
 <module type="WEB_MODULE" version="4">
   <component name="Go" enabled="true" />
   <component name="NewModuleRootManager">
-    <content url="file://$MODULE_DIR$" />
+    <content url="file://$MODULE_DIR$">
+      <excludeFolder url="file://$MODULE_DIR$/php/vendor/composer" />
+      <excludeFolder url="file://$MODULE_DIR$/php/vendor/fig/http-message-util" />
+      <excludeFolder url="file://$MODULE_DIR$/php/vendor/nikic/fast-route" />
+      <excludeFolder url="file://$MODULE_DIR$/php/vendor/psr/container" />
+      <excludeFolder url="file://$MODULE_DIR$/php/vendor/psr/http-factory" />
+      <excludeFolder url="file://$MODULE_DIR$/php/vendor/psr/http-message" />
+      <excludeFolder url="file://$MODULE_DIR$/php/vendor/psr/http-server-handler" />
+      <excludeFolder url="file://$MODULE_DIR$/php/vendor/psr/http-server-middleware" />
+      <excludeFolder url="file://$MODULE_DIR$/php/vendor/psr/log" />
+      <excludeFolder url="file://$MODULE_DIR$/php/vendor/ralouphie/getallheaders" />
+      <excludeFolder url="file://$MODULE_DIR$/php/vendor/slim/psr7" />
+      <excludeFolder url="file://$MODULE_DIR$/php/vendor/slim/slim" />
+    </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="my-app" />
